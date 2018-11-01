@@ -5,33 +5,24 @@
 #include <math.h>
 
 double function(double x, double y){
-  return x * x * ( - (y * y));
+  return 1;//x * x * (  (y * y));
 }
 
 double integrate(double hxmin, double hxmax, double hymin, double hymax, int nxmax, int nymax){
   double deltahx, deltahy;
   double integral = 0;
-  double nystart;
   deltahx = (hxmax - hxmin) / nxmax;
   deltahy = (hymax - hymin) / nymax;
-  omp_get_num_threads();
-  nystart = omp_get_thread_num() * nymax / omp_get_num_threads();
-  for (int ny = nystart; ny < nymax; ny++) {
-    double c = 0;
-    printf("nyyyy =%d\n", ny);
+  printf("%d, %d\n",nymax,nxmax );
+  for (int ny = 0; ny < nymax; ny++) {
     for (int nx = 0; nx < nxmax; nx++) {
-      c += deltahx * deltahy / 4 * (
+      integral += deltahx * deltahy / 4 * (
         function(hxmin + deltahx * nx      , hymin + deltahy * ny      ) +
         function(hxmin + deltahx * (nx + 1), hymin + deltahy * ny      ) +
         function(hxmin + deltahx * nx      , hymin + deltahy * (ny + 1)) +
         function(hxmin + deltahx * (nx + 1), hymin + deltahy * (ny + 1)));
-      printf("c = %f\n", c);
-    integral +=c;
-    printf("nystart = %f\n", omp_get_thread_num() * nymax / omp_get_num_threads());
+    //printf("nystart = %f\n", omp_get_thread_num() * nymax / omp_get_num_threads());
     //printf("int = %f\n", integral);
-
-  return integral;
-
     }
     //integral +=c;
   }
@@ -39,22 +30,28 @@ double integrate(double hxmin, double hxmax, double hymin, double hymax, int nxm
   return integral;
 }
 int main(int argc, char *argv[]){
+  int k=0;
+
   double time1=0.0, tstart;
   double hxmin = 0., hymin = 0., hxmax = 1., hymax = 1.;
-  int nxmax = 8000000, nymax = 8;
+  int nxmax = 8000, nymax = 8000;
   double integral = 0;
   tstart = clock();
-  #pragma omp parallel
-  {
-    #pragma omp single
-    {
+  //#pragma omp parallel
+  { double lochxmin, lochxmax, lochymin, lochymax;
+    int locnxmax = 32000, locnymax = 2000;
+      lochxmin = hxmin;//hxmin + omp_get_thread_num() * (hxmax - hxmin) / omp_get_num_threads();
+      lochxmax = hxmax;//hxmin + (omp_get_thread_num()+1) * (hxmax - hxmin) / omp_get_num_threads();
+      //lochymin = hymin + omp_get_thread_num() * (hymax - hymin) / omp_get_num_threads();
+      //lochymax = hymin + (omp_get_thread_num()+1) * (hymax - hymin) / omp_get_num_threads();
+      lochymin = hymin;
+      lochymax = hymax;
+      integral += integrate(lochxmin, lochxmax, lochymin, lochymax, locnxmax, locnymax);
+      printf("thread nr:%d\n", omp_get_thread_num());
+      //printf("INTEGRAL:%f, %f\n", integral2, lochymax);
 
-      #pragma omp task
-      {
-        integral +=integrate(hxmin, hxmax, hymin, hymax, nxmax, nymax);
-        printf("thread nr:%d\n", omp_get_thread_num());
-      }
-    }
+    #pragma omp taskwait
+    printf("task ended\n" );
   }
   time1 += clock() - tstart;
   time1 = time1/CLOCKS_PER_SEC;
@@ -66,6 +63,7 @@ int main(int argc, char *argv[]){
   time1 += clock() - tstart;
   time1 = time1/CLOCKS_PER_SEC;
   //printf("%lf\n",time1 );
-
+  scanf("%d\n", (int) k);
+  return 0;
 
 }
