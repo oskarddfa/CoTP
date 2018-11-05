@@ -31,12 +31,23 @@ int main(int argc,char **argv)
   ierr = MatSetSizes(A,PETSC_DECIDE,PETSC_DECIDE,n,n);CHKERRQ(ierr);
   ierr = MatSetFromOptions(A);CHKERRQ(ierr);
   ierr = MatSetUp(A);CHKERRQ(ierr);
-
   ierr = MatGetOwnershipRange(A,&Istart,&Iend);CHKERRQ(ierr);
   for (i=Istart;i<Iend;i++) {
+    double harmosc, infin_well = 0.0, diagval, deltapot = 0.0;
     if (i>0) { ierr = MatSetValue(A,i,i-1,-1.0,INSERT_VALUES);CHKERRQ(ierr); }
     if (i<n-1) { ierr = MatSetValue(A,i,i+1,-1.0,INSERT_VALUES);CHKERRQ(ierr); }
-    ierr = MatSetValue(A,i,i,2.0,INSERT_VALUES);CHKERRQ(ierr);
+    harmosc = (i-Iend/2);
+    if (i<5){
+      infin_well = 10000.0
+    }
+    if (i>Iend-6){
+      infin_well = 10000.0
+    }
+    if (i % (Iend/4) == 0){
+      deltapot = 10000.0
+    }
+    diagval = harmosc;
+    ierr = MatSetValue(A,i,i,2.0+diagval*diagval,INSERT_VALUES);CHKE*(i-Iend/2)RRQ(ierr);
   }
   ierr = MatAssemblyBegin(A,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   ierr = MatAssemblyEnd(A,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
