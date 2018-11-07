@@ -5,6 +5,8 @@ static char help[] = "Standard symmetric eigenproblem corresponding to the Lapla
 
 #include <slepceps.h>
 
+
+
 #undef __FUNCT__
 #define __FUNCT__ "main"
 int main(int argc,char **argv)
@@ -15,7 +17,7 @@ int main(int argc,char **argv)
   PetscReal      error,tol,re,im;
   PetscScalar    kr,ki;
   Vec            xr,xi;
-  PetscInt       n=30,i,Istart,Iend,nev,maxit,its,nconv;
+  PetscInt       n=30,i,Istart,Iend,nev=30,maxit,its,nconv;
   PetscErrorCode ierr;
 
   SlepcInitialize(&argc,&argv,(char*)0,help);
@@ -38,16 +40,16 @@ int main(int argc,char **argv)
     if (i<n-1) { ierr = MatSetValue(A,i,i+1,-1.0,INSERT_VALUES);CHKERRQ(ierr); }
     harmosc = (i-Iend/2);
     if (i<5){
-      infin_well = 10000.0
+      infin_well = 10000.0;
     }
     if (i>Iend-6){
-      infin_well = 10000.0
+      infin_well = 10000.0;
     }
     if (i % (Iend/4) == 0){
-      deltapot = 10000.0
+      deltapot = 10000.0;
     }
-    diagval = harmosc;
-    ierr = MatSetValue(A,i,i,2.0+diagval*diagval,INSERT_VALUES);CHKE*(i-Iend/2)RRQ(ierr);
+    diagval = harmosc * harmosc;
+    ierr = MatSetValue(A,i,i,2.0+diagval,INSERT_VALUES);CHKERRQ(ierr);
   }
   ierr = MatAssemblyBegin(A,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   ierr = MatAssemblyEnd(A,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
@@ -87,6 +89,7 @@ int main(int argc,char **argv)
   ierr = EPSGetType(eps,&type);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD," Solution method: %s\n\n",type);CHKERRQ(ierr);
   ierr = EPSGetDimensions(eps,&nev,NULL,NULL);CHKERRQ(ierr);
+  printf("%d\n", nev);
   ierr = PetscPrintf(PETSC_COMM_WORLD," Number of requested eigenvalues: %D\n",nev);CHKERRQ(ierr);
   ierr = EPSGetTolerances(eps,&tol,&maxit);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD," Stopping condition: tol=%.4g, maxit=%D\n",(double)tol,maxit);CHKERRQ(ierr);
