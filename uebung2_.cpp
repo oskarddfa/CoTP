@@ -15,9 +15,9 @@ int main(int argc,char **argv)
   EPS            eps;         /* eigenproblem solver context */
   EPSType        type;
   PetscReal      error,tol,re,im;
-  PetscScalar    kr,ki;
-  Vec            xr,xi;
-  PetscInt       n=30,i,Istart,Iend,nev=30,maxit,its,nconv;
+  PetscScalar    kr,ki, *v;
+  Vec            xr,xi,Vr,Vi;
+  PetscInt       n=30,i,Istart,Iend,nev,maxit,its,nconv;
   PetscErrorCode ierr;
 
   SlepcInitialize(&argc,&argv,(char*)0,help);
@@ -56,6 +56,8 @@ int main(int argc,char **argv)
 
   ierr = MatCreateVecs(A,NULL,&xr);CHKERRQ(ierr);
   ierr = MatCreateVecs(A,NULL,&xi);CHKERRQ(ierr);
+  ierr = MatCreateVecs(A,NULL,&Vi);CHKERRQ(ierr);
+  ierr = MatCreateVecs(A,NULL,&Vr);CHKERRQ(ierr);
 
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                 Create the eigensolver and set various options
@@ -121,7 +123,10 @@ int main(int argc,char **argv)
          Compute the relative error associated to each eigenpair
       */
       ierr = EPSComputeError(eps,i,EPS_ERROR_RELATIVE,&error);CHKERRQ(ierr);
+      ierr = EPSGetEigenvector(eps,i,Vr,Vi);CHKERRQ(ierr);
 
+      // v ist der Eigenvektor!
+      VecGetArray(Vr, &v);
 #if defined(PETSC_USE_COMPLEX)
       re = PetscRealPart(kr);
       im = PetscImaginaryPart(kr);
@@ -134,6 +139,12 @@ int main(int argc,char **argv)
       } else {
         ierr = PetscPrintf(PETSC_COMM_WORLD,"   %12f       %12g\n",(double)re,(double)error);CHKERRQ(ierr);
       }
+      // Hier soll der Vektor v zu einem file geschrieben werden --> Wie?
+      FILE *f = fopen("result.txt", "w");
+      //for (size_t i = 0; i < sizeof(v); i++) {
+      fwrite(v, sizeof(float), sizeof(v), f);
+      //}
+      fclose(f);
     }
     ierr = PetscPrintf(PETSC_COMM_WORLD,"\n");CHKERRQ(ierr);
   }
@@ -145,6 +156,8 @@ int main(int argc,char **argv)
   ierr = MatDestroy(&A);CHKERRQ(ierr);
   ierr = VecDestroy(&xr);CHKERRQ(ierr);
   ierr = VecDestroy(&xi);CHKERRQ(ierr);
+  ierr = VecDestroy(&Vi);CHKERRQ(ierr);
+  ierr = VecDestroy(&Vr);CHKERRQ(ierr);
   ierr = SlepcFinalize();
   return ierr;
 }
