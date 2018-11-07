@@ -24,14 +24,16 @@ LOCDIR   = src/
 
 CC = g++
 LINKERFLAG = -lm -lslepc -lpetsc -lX11 -lpthread -llapack -lblas
+default: uebung2.o
 
 include ${SLEPC_DIR}/lib/slepc/conf/slepc_common
 
-uebung2.o:  uebung2_.cpp
-	${CC} ${LINKERFLAG} ${PETSC_CCPPFLAGS} ${SLEPC_INCLUDE} ${SLEPC_EPS_LIB} -lm -fopenmp uebung2_.cpp
+uebung2.o:  uebung2_.cpp chkopts
+	-${CLINKER} uebung2_.cpp ${SLEPC_EPS_LIB} ${PETSC_CCPPFLAGS}  ${SLEPC_INCLUDE} ${LINKERFLAG}
 	@echo "HIH"
 
 foo:
+	#${CC} ${LINKERFLAG} ${PETSC_CCPPFLAGS} ${SLEPC_INCLUDE} ${SLEPC_EPS_LIB} -lm -fopenmp uebung2_.cpp
 	@echo "check"
 
 uebung2_: uebung2_.cpp
