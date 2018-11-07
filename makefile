@@ -31,6 +31,7 @@ uebung2.o:  uebung2_.cpp
 	${CC} ${LINKERFLAG} ${PETSC_CCPPFLAGS} ${SLEPC_INCLUDE} ${SLEPC_EPS_LIB} -lm -fopenmp uebung2_.cpp
 	@echo "HIH"
 
+
 foo:
 	@echo "check"
 
