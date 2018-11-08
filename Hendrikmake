@@ -1,0 +1,15 @@
+CC=g++
+CFLAGS= -o
+LIBS = -lpetsc -lslepc -lm -pthread -lmpi
+INCLUDE =  -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/include/petsc -I/usr/include/slepc -L/usr/lib/x86_64-linux-gnu/openmpi/lib
+OUTPUTFILE = Schroedinger
+
+Schroedinger: uebung2_.cpp
+
+	$(CC) -o $(OUTPUTFILE) $(INCLUDE) uebung2_.cpp $(LIBS)
+
+run:
+	./Schroedinger
+	
+
+
