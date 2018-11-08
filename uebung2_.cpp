@@ -39,7 +39,7 @@ int main(int argc,char **argv)
   EPS            eps;         /* eigenproblem solver context */
   EPSType        type;
   PetscReal      error,tol,re,im;
-  PetscScalar    kr,ki, *v, *vi;
+  PetscScalar    kr,ki;//, *v, *vi;
   Vec            xr,xi;
   PetscInt       n=30,i,Istart,Iend,nev,maxit,its,nconv;
   PetscErrorCode ierr;
@@ -62,7 +62,7 @@ int main(int argc,char **argv)
     double harmosc, infin_well = 0.0, diagval, deltapot = 0.0;
     if (i>0) { ierr = MatSetValue(A,i,i-1,-1.0,INSERT_VALUES);CHKERRQ(ierr); }
     if (i<n-1) { ierr = MatSetValue(A,i,i+1,-1.0,INSERT_VALUES);CHKERRQ(ierr); }
-    harmosc = (i-Iend/2);
+    harmosc = (i-Iend/2.0)/Iend;
     if (i<5){
       infin_well = 10000.0;
     }
@@ -74,7 +74,7 @@ int main(int argc,char **argv)
     }
     diagval = harmosc * harmosc;
     ierr = MatSetValue(A,i,i,2.0+diagval,INSERT_VALUES);CHKERRQ(ierr);
-    printf("%f\n",2.0+diagval );
+    printf("%f\n",diagval );
   }
   ierr = MatAssemblyBegin(A,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   ierr = MatAssemblyEnd(A,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
@@ -147,8 +147,11 @@ int main(int argc,char **argv)
          Compute the relative error associated to each eigenpair
       */
       ierr = EPSComputeError(eps,i,EPS_ERROR_RELATIVE,&error);CHKERRQ(ierr);
-      VecGetArray(xr, &v);
-      VecGetArray(xi, &vi);
+      const PetscScalar *v;
+      const PetscScalar *vi;
+
+      VecGetArrayRead(xr, &v);
+      VecGetArrayRead(xi, &vi);
 
 #if defined(PETSC_USE_COMPLEX)
       re = PetscRealPart(kr);
@@ -163,12 +166,13 @@ int main(int argc,char **argv)
         ierr = PetscPrintf(PETSC_COMM_WORLD,"   %12f       %12g\n",(double)re,(double)error);CHKERRQ(ierr);
       }
       // Hier soll der Vektor v zu einem file geschrieben werden --> Wie?
-      char filename[15];
-      snprintf(filename, 15,"vector%d.data", i);
+      char filename[20];
+      snprintf(filename, 20,"data/EV%d.data", i);
       // printf("%s\n", filename);
       FILE *f = fopen(filename, "w");
       for (size_t j = 0; j < n; j++) {
-        fprintf(f, "%f\n", v[j]*v[j]+vi[j]*vi[j]);
+        double toprint = v[j]*v[j]+kr;
+        fprintf(f, "%f\n", toprint);//+vi[j]*vi[j]);
       }
       fclose(f);
     }
