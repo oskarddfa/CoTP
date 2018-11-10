@@ -1,0 +1,13 @@
+./Schroedinger -n <Gridpoints> -eps_nev <#requested eigenvalues> [-Potential]
+
+Hier findet ihr die Kommandozeilenparameter!
+-n 			Auflösung = Größe der Matrix
+-eps_nev 	Wie viele Eigenwerte ihr wollt, meist alle, also n
+-Potential 	Die Art des Potentials harmonic, Wall, Well
+
+Bsp:
+ ./Schroedinger -n 100 -eps_nev 100 -Wall
+ 
+
+Für das kompilieren müsst ihr die ROOT-Bibliotheken installiert haben.
+
