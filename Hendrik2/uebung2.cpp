@@ -61,9 +61,11 @@ int main(int argc,char **argv)
   //x- domain
   
   double xstart = -10; double xend = 10; double height = 20.0;
-  double (*V)(double,double);
+  double (*V)(double,double);  // No other parameters are possible like this, i.e. Potential need to have two args input
   if (strcmp(argv[argc-1],"-Wall")==0){V = Wall;printf("POTENTIAL:\tPotentialschwelle\n");}
   else if (strcmp(argv[argc-1],"-Well")==0){V = Well;printf("POTENTIAL:\tPotentialtopf\n");}
+  else if (strcmp(argv[argc-1],"-Doppelmulde")==0){V = Doppelmulde;printf("POTENTIAL:\tDoppelmulde\n");}
+  else if (strcmp(argv[argc-1],"-Lennard_Jones")==0){V = Len_Jones;printf("POTENTIAL:\tLennard-Jones Potential\n");}
   else {V = harmonic;printf("POTENTIALL:\tHarmonischer Oszillator\n");}
   
   
@@ -101,12 +103,14 @@ int main(int argc,char **argv)
   ######################################################################*/
   
   
-  for (i=Istart;i<Iend;i++) {
+  for (i=Istart;i<Iend;i++) {    
     if (i>0) { ierr = MatSetValue(A,i,i-1,-1.0/(h*h),INSERT_VALUES);CHKERRQ(ierr); }
     if (i<n-1) { ierr = MatSetValue(A,i,i+1,-1.0/(h*h),INSERT_VALUES);CHKERRQ(ierr); }
     ierr = MatSetValue(A,i,i,2.0/(h*h)+V(xstart+(i+1)*h,height),INSERT_VALUES);CHKERRQ(ierr);
   }
-  
+
+
+  //Warum in V(xstart+(i+1)*h,height) i+1 und nicht einfach i oder vielleicht i+0.5?
   
   /*####################################################################
   ######################################################################*/
