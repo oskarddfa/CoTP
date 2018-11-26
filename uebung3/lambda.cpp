@@ -2,7 +2,7 @@
 
 #include <math.h>
 
-double lambda(double a, double A[], double b, double B[])
+double lambda(double a, double b, double Ax, double Bx, double Ay=0.0, double Az=0.0, double By=0.0, double Bz=0.0)
 	{
-	return pow((M_PI/(a+b)),1.5)*exp(-a*b/(a+b)*((A[0]-B[0])*(A[0]-B[0])+(A[1]-B[1])*(A[1]-B[1])+(A[2]-B[2])*(A[2]-B[2]));
+	return pow((M_PI/(a+b)),1.5) * exp( - a*b/(a+b) * ((Ax-Bx)*(Ax-Bx) + (Ay-By)*(Ay-By) + (Az-Bz)*(Az-Bz)));
 	}

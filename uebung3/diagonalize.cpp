@@ -6,7 +6,7 @@ static char help[] = "Standard symmetric eigenproblem corresponding to the Lapla
 #include "lambda.h"
 
 
-int diagonalize(Mat *D, Mat *S, double a[], double Ax[], int size)
+int diagonalize(Mat D, Mat S, double a[], double Ax[], int size)
 {
   Mat            A;           /* problem matrix */
   EPS            eps;         /* eigenproblem solver context */
@@ -18,7 +18,6 @@ int diagonalize(Mat *D, Mat *S, double a[], double Ax[], int size)
   PetscErrorCode ierr;
 
 
-  SlepcInitialize(&argc,&argv,(char*)0,help);
 
   ierr = PetscOptionsGetInt(NULL,NULL,"-n",&n,NULL);CHKERRQ(ierr);
 
@@ -120,7 +119,7 @@ int diagonalize(Mat *D, Mat *S, double a[], double Ax[], int size)
       re = kr;
       im = ki;
 #endif
-      MatSetValue(D, i, i, re + im *1.0i, INSERT_VALUES);
+      MatSetValue(D, i, i, re, INSERT_VALUES);
       /*
       if (im!=0.0) {
         ierr = PetscPrintf(PETSC_COMM_WORLD," %9f%+9fi %12g\n",(double)re,(double)im,(double)error);CHKERRQ(ierr);

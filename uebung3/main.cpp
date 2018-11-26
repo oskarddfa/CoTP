@@ -9,10 +9,12 @@ static char help[] = "Standard symmetric eigenproblem corresponding to the Lapla
 #include <memory>
 #include "hamilton.h"
 #include "lambda.h"
+#include "diagonalize.h"
 
 
 #undef __FUNCT__
 #define __FUNCT__ "main"
+
 std::string format(const char* format, ...)
 {
     va_list args;
@@ -33,7 +35,7 @@ std::string format(const char* format, ...)
 
 int main(int argc,char **argv)
 {
-  Mat            A,D,S;           /* problem matrix */
+  Mat            A,D, D_1,S,H;           /* problem matrix */
   EPS            eps;         /* eigenproblem solver context */
   EPSType        type;
   PetscReal      error,tol,re,im;
@@ -41,16 +43,16 @@ int main(int argc,char **argv)
   Vec            xr,xi;
   PetscInt       n=8,i,Istart,Iend,nev=8,maxit,its,nconv;
   PetscErrorCode ierr;
-  double a[4] = [1.0, 2.0, 3.0, 4.0];
-  double Ax[2] = [0.0, 1.0];
-  double Ay[0] = [0.0, 0.0];
-  double Az[0] = [0.0, 0.0];
-  double Kx[2] = [0.0, 1.0];
-  double Ky[0] = [0.0, 0.0];
-  double Kz[0] = [0.0, 0.0];
+  double a[4] = {1.0, 2.0, 3.0, 4.0};
+  double Ax[2] = {0.0, 1.0};
+  double Ay[2] = {0.0, 0.0};
+  double Az[2] = {0.0, 0.0};
+  double Kx[2] = {0.0, 1.0};
+  double Ky[2] = {0.0, 0.0};
+  double Kz[2] = {0.0, 0.0};
   int N_nuclei = 2;
   int N_particles = 1;
-
+  int size = n;
 
 
   SlepcInitialize(&argc,&argv,(char*)0,help);
@@ -80,11 +82,14 @@ int main(int argc,char **argv)
 
   for (i=Istart;i<Iend;i++) {
     for (int j = Istart; j < Iend; j++) {
-      double hamiltonvalue = hamiltonian(*a[i % 4], *a[j % 4], *Ax[i/4], *Ay[i/4], *Az[i/4], *Ax[j/4], *Ay[j/4], *Az[j/4], *Kx, *Ky, *Kz, N_nuclei, N_particles)
+      double hamiltonvalue = hamiltonian(&a[i % 4], &a[j % 4], &Ax[i/4], &Ay[i/4],
+        &Az[i/4], &Ax[j/4], &Ay[j/4], &Az[j/4], Kx, Ky, Kz, N_nuclei, N_particles);
       ierr = MatSetValue(A,i,j,hamiltonvalue,INSERT_VALUES);CHKERRQ(ierr);
     }
   }
-//////////>>>>>>  MATMATMULT(D,A)
+  MatHermitianTranspose(D, MAT_INITIAL_MATRIX, &D_1);
+  MatMatMatMult(D,A,D_1, MAT_INITIAL_MATRIX, PETSC_DEFAULT, &H);
+  MatCopy(H, A, DIFFERENT_NONZERO_PATTERN);
   ierr = MatAssemblyBegin(A,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   ierr = MatAssemblyEnd(A,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 
@@ -173,16 +178,7 @@ int main(int argc,char **argv)
       } else {
         ierr = PetscPrintf(PETSC_COMM_WORLD,"   %12f       %12g\n",(double)re,(double)error);CHKERRQ(ierr);
       }
-      // Hier soll der Vektor v zu einem file geschrieben werden --> Wie?
-      char filename[20];
-      snprintf(filename, 20,"data/EV%d.data", i);
-      // printf("%s\n", filename);
-      FILE *f = fopen(filename, "w");
-      for (size_t j = 0; j < n; j++) {
-        double toprint = v[j]*v[j]+kr;
-        fprintf(f, "%f\n", toprint);//+vi[j]*vi[j]);
-      }
-      fclose(f);
+
     }
     ierr = PetscPrintf(PETSC_COMM_WORLD,"\n");CHKERRQ(ierr);
   }
