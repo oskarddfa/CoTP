@@ -1,5 +1,3 @@
-#ifndef HAMILTON
-#define HAMILTON
 
 #include <cmath>
 
@@ -84,5 +82,3 @@ double hamiltonian(double a[], double b[], double Ax[], double Ay[], double Az[]
   }
   return result;
 }
-
-#endif
