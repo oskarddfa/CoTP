@@ -35,7 +35,7 @@ std::string format(const char* format, ...)
 
 int main(int argc,char **argv)
 {
-  Mat            A,D, D_1,S,H;           /* problem matrix */
+  Mat            A,D,S_1,S,H;           /* problem matrix */
   EPS            eps;         /* eigenproblem solver context */
   EPSType        type;
   PetscReal      error,tol,re,im;
@@ -44,10 +44,10 @@ int main(int argc,char **argv)
   PetscInt       n=8,i,Istart,Iend,nev=8,maxit,its,nconv;
   PetscErrorCode ierr;
   double a[4] = {1.0, 2.0, 3.0, 4.0};
-  double Ax[2] = {0.0, 1.0};
+  double Ax[2] = {0.0, 0.01};
   double Ay[2] = {0.0, 0.0};
   double Az[2] = {0.0, 0.0};
-  double Kx[2] = {0.0, 1.0};
+  double Kx[2] = {0.0, 0.01};
   double Ky[2] = {0.0, 0.0};
   double Kz[2] = {0.0, 0.0};
   int N_nuclei = 2;
@@ -67,18 +67,26 @@ int main(int argc,char **argv)
   ierr = MatCreate(PETSC_COMM_WORLD,&A);CHKERRQ(ierr);
   ierr = MatCreate(PETSC_COMM_WORLD,&D);CHKERRQ(ierr);
   ierr = MatCreate(PETSC_COMM_WORLD,&S);CHKERRQ(ierr);
+  ierr = MatCreate(PETSC_COMM_WORLD,&S_1);CHKERRQ(ierr);
+  ierr = MatCreate(PETSC_COMM_WORLD,&H);CHKERRQ(ierr);
   ierr = MatSetSizes(A,PETSC_DECIDE,PETSC_DECIDE,n,n);CHKERRQ(ierr);
   ierr = MatSetSizes(D,PETSC_DECIDE,PETSC_DECIDE,n,n);CHKERRQ(ierr);
   ierr = MatSetSizes(S,PETSC_DECIDE,PETSC_DECIDE,n,n);CHKERRQ(ierr);
+  ierr = MatSetSizes(S_1,PETSC_DECIDE,PETSC_DECIDE,n,n);CHKERRQ(ierr);
+  ierr = MatSetSizes(H,PETSC_DECIDE,PETSC_DECIDE,n,n);CHKERRQ(ierr);
   ierr = MatSetFromOptions(A);CHKERRQ(ierr);
   ierr = MatSetFromOptions(D);CHKERRQ(ierr);
   ierr = MatSetFromOptions(S);CHKERRQ(ierr);
+  ierr = MatSetFromOptions(S_1);CHKERRQ(ierr);
+  ierr = MatSetFromOptions(H);CHKERRQ(ierr);
   ierr = MatSetUp(A);CHKERRQ(ierr);
   ierr = MatSetUp(D);CHKERRQ(ierr);
   ierr = MatSetUp(S);CHKERRQ(ierr);
+  ierr = MatSetUp(S_1);CHKERRQ(ierr);
+  ierr = MatSetUp(H);CHKERRQ(ierr);
   ierr = MatGetOwnershipRange(A,&Istart,&Iend);CHKERRQ(ierr);
 
-  diagonalize(&D, &S, a, Ax, size);
+  diagonalize(D, S, a, Ax, Ay, Az, size);
 
   for (i=Istart;i<Iend;i++) {
     for (int j = Istart; j < Iend; j++) {
@@ -87,12 +95,24 @@ int main(int argc,char **argv)
       ierr = MatSetValue(A,i,j,hamiltonvalue,INSERT_VALUES);CHKERRQ(ierr);
     }
   }
-  MatHermitianTranspose(D, MAT_INITIAL_MATRIX, &D_1);
-  MatMatMatMult(D,A,D_1, MAT_INITIAL_MATRIX, PETSC_DEFAULT, &H);
-  MatCopy(H, A, DIFFERENT_NONZERO_PATTERN);
+  ierr = MatAssemblyBegin(D,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  ierr = MatAssemblyEnd(D,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   ierr = MatAssemblyBegin(A,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   ierr = MatAssemblyEnd(A,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  ierr = MatAssemblyBegin(S,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  ierr = MatAssemblyEnd(S,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  ierr = MatAssemblyBegin(S_1,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  ierr = MatAssemblyEnd(S_1,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  MatTranspose(S, MAT_INITIAL_MATRIX, &S_1);
 
+
+  MatMatMatMult(S,A,S_1, MAT_INITIAL_MATRIX, PETSC_DEFAULT, &H);
+  MatCopy(H, A, DIFFERENT_NONZERO_PATTERN);
+
+  ierr = MatDestroy(&D);CHKERRQ(ierr);
+  ierr = MatDestroy(&S);CHKERRQ(ierr);
+  ierr = MatDestroy(&S_1);CHKERRQ(ierr);
+  ierr = MatDestroy(&H);CHKERRQ(ierr);
   ierr = MatCreateVecs(A,NULL,&xr);CHKERRQ(ierr);
   ierr = MatCreateVecs(A,NULL,&xi);CHKERRQ(ierr);
 
@@ -188,7 +208,6 @@ int main(int argc,char **argv)
   */
   ierr = EPSDestroy(&eps);CHKERRQ(ierr);
   ierr = MatDestroy(&A);CHKERRQ(ierr);
-  ierr = MatDestroy(&D);CHKERRQ(ierr);
   ierr = MatDestroy(&S);CHKERRQ(ierr);
   ierr = VecDestroy(&xr);CHKERRQ(ierr);
   ierr = VecDestroy(&xi);CHKERRQ(ierr);

@@ -6,7 +6,7 @@ static char help[] = "Standard symmetric eigenproblem corresponding to the Lapla
 #include "lambda.h"
 
 
-int diagonalize(Mat D, Mat S, double a[], double Ax[], int size)
+int diagonalize(Mat D, Mat S, double a[], double Ax[], double Ay[], double Az[], int size)
 {
   Mat            A;           /* problem matrix */
   EPS            eps;         /* eigenproblem solver context */
@@ -128,19 +128,18 @@ int diagonalize(Mat D, Mat S, double a[], double Ax[], int size)
       }
       */
 
-      for (size_t j = 0; j < n; j++) {
-        MatSetValue(S, i, j, v[j], INSERT_VALUES);
+      for (int j = 0; j < n; j++) {
+        MatSetValue(S, j, i, v[j], INSERT_VALUES);
       }
+      PetscPrintf(PETSC_COMM_WORLD," %9f%+9fi %12g\n",(double)re,(double)im,(double)error);
     }
   }
-
-  /*
+   /*
      Free work space
   */
   ierr = EPSDestroy(&eps);CHKERRQ(ierr);
   ierr = MatDestroy(&A);CHKERRQ(ierr);
   ierr = VecDestroy(&xr);CHKERRQ(ierr);
   ierr = VecDestroy(&xi);CHKERRQ(ierr);
-  ierr = SlepcFinalize();
   return ierr;
 }
