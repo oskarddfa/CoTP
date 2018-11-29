@@ -33,7 +33,7 @@ int diagonalize(Mat D, Mat S, double a[], double Ax[], double Ay[], double Az[],
 
   for (i=Istart;i<Iend;i++) {
     for (int j = Istart; j < Iend; j++) {
-      double lambdavalue = lambda(a[i % 4], a[j % 4], Ax[i / 4], Ax[j / 4]);
+      double lambdavalue = lambda(a[i % 4], a[j % 4], Ax[i / 4], Ax[j / 4], Ay[i / 4], Ay[j / 4], Az[i / 4], Az[j / 4]);
       ierr = MatSetValue(A,i,j,lambdavalue,INSERT_VALUES);CHKERRQ(ierr);
     }
   }

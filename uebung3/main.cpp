@@ -39,20 +39,20 @@ int main(int argc,char **argv)
   EPS            eps;         /* eigenproblem solver context */
   EPSType        type;
   PetscReal      error,tol,re,im;
-  PetscScalar    kr,ki;//, *v, *vi;
+  PetscScalar    kr,ki;
   Vec            xr,xi;
   PetscInt       n=8,i,Istart,Iend,nev=8,maxit,its,nconv;
   PetscErrorCode ierr;
-  double a[4] = {1.0, 2.0, 3.0, 4.0};
-  double Ax[2] = {0.0, 0.01};
-  double Ay[2] = {0.0, 0.0};
-  double Az[2] = {0.0, 0.0};
-  double Kx[2] = {0.0, 0.01};
-  double Ky[2] = {0.0, 0.0};
-  double Kz[2] = {0.0, 0.0};
   int N_nuclei = 2;
   int N_particles = 1;
   int size = n;
+  double a[4] = {1.0, 2.0, 3.0, 4.0};
+  double Ax[N_nuclei] = {0.0, 0.01};
+  double Ay[N_nuclei] = {0.0, 0.0};
+  double Az[N_nuclei] = {0.0, 0.0};
+  double Kx[N_nuclei] = {0.0, 0.01};
+  double Ky[N_nuclei] = {0.0, 0.0};
+  double Kz[N_nuclei] = {0.0, 0.0};
 
 
   SlepcInitialize(&argc,&argv,(char*)0,help);
@@ -84,7 +84,7 @@ int main(int argc,char **argv)
   ierr = MatSetUp(S);CHKERRQ(ierr);
   ierr = MatSetUp(S_1);CHKERRQ(ierr);
   ierr = MatSetUp(H);CHKERRQ(ierr);
-  ierr = MatGetOwnershipRange(A,&Istart,&Iend);CHKERRQ(ierr);
+  ierr = MatGetOwnershipRange(H,&Istart,&Iend);CHKERRQ(ierr);
 
   diagonalize(D, S, a, Ax, Ay, Az, size);
 
@@ -103,18 +103,24 @@ int main(int argc,char **argv)
   ierr = MatAssemblyEnd(S,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   ierr = MatAssemblyBegin(S_1,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   ierr = MatAssemblyEnd(S_1,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  ierr = MatAssemblyBegin(H,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+  ierr = MatAssemblyEnd(H,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   MatTranspose(S, MAT_INITIAL_MATRIX, &S_1);
 
 
   MatMatMatMult(S,A,S_1, MAT_INITIAL_MATRIX, PETSC_DEFAULT, &H);
-  MatCopy(H, A, DIFFERENT_NONZERO_PATTERN);
-
+  // MatCopy(H, A, DIFFERENT_NONZERO_PATTERN);
+  PetscBool aer;
+  MatEqual(A,H, &aer);
+  if (not aer){
+    printf("THEY ARE NOT EQUAL\n" );
+  }
   ierr = MatDestroy(&D);CHKERRQ(ierr);
-  ierr = MatDestroy(&S);CHKERRQ(ierr);
+  // ierr = MatDestroy(&S);CHKERRQ(ierr);
   ierr = MatDestroy(&S_1);CHKERRQ(ierr);
-  ierr = MatDestroy(&H);CHKERRQ(ierr);
-  ierr = MatCreateVecs(A,NULL,&xr);CHKERRQ(ierr);
-  ierr = MatCreateVecs(A,NULL,&xi);CHKERRQ(ierr);
+  // ierr = MatDestroy(&H);CHKERRQ(ierr);
+  ierr = MatCreateVecs(H,NULL,&xr);CHKERRQ(ierr);
+  ierr = MatCreateVecs(H,NULL,&xi);CHKERRQ(ierr);
 
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                 Create the eigensolver and set various options
@@ -127,7 +133,7 @@ int main(int argc,char **argv)
   /*
      Set operators. In this case, it is a standard eigenvalue problem
   */
-  ierr = EPSSetOperators(eps,A,NULL);CHKERRQ(ierr);
+  ierr = EPSSetOperators(eps,H,NULL);CHKERRQ(ierr);
   ierr = EPSSetProblemType(eps,EPS_HEP);CHKERRQ(ierr);
 
   /*
@@ -143,14 +149,14 @@ int main(int argc,char **argv)
   /*
      Optional: Get some information from the solver and display it
   */
-  ierr = EPSGetIterationNumber(eps,&its);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD," Number of iterations of the method: %D\n",its);CHKERRQ(ierr);
-  ierr = EPSGetType(eps,&type);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD," Solution method: %s\n\n",type);CHKERRQ(ierr);
-  ierr = EPSGetDimensions(eps,&nev,NULL,NULL);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD," Number of requested eigenvalues: %D\n",nev);CHKERRQ(ierr);
-  ierr = EPSGetTolerances(eps,&tol,&maxit);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD," Stopping condition: tol=%.4g, maxit=%D\n",(double)tol,maxit);CHKERRQ(ierr);
+  // ierr = EPSGetIterationNumber(eps,&its);CHKERRQ(ierr);
+  // ierr = PetscPrintf(PETSC_COMM_WORLD," Number of iterations of the method: %D\n",its);CHKERRQ(ierr);
+  // ierr = EPSGetType(eps,&type);CHKERRQ(ierr);
+  // ierr = PetscPrintf(PETSC_COMM_WORLD," Solution method: %s\n\n",type);CHKERRQ(ierr);
+  // ierr = EPSGetDimensions(eps,&nev,NULL,NULL);CHKERRQ(ierr);
+  // ierr = PetscPrintf(PETSC_COMM_WORLD," Number of requested eigenvalues: %D\n",nev);CHKERRQ(ierr);
+  // ierr = EPSGetTolerances(eps,&tol,&maxit);CHKERRQ(ierr);
+  // ierr = PetscPrintf(PETSC_COMM_WORLD," Stopping condition: tol=%.4g, maxit=%D\n",(double)tol,maxit);CHKERRQ(ierr);
 
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                     Display solution and clean up

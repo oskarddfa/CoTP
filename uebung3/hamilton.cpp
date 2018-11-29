@@ -3,7 +3,14 @@
 
 //Funktion die im Paper von Boys benutzt wird
 double F(double x){
-  return 1 / sqrt(x) * (erf(sqrt(x))- erf(0));
+  double result;
+  if (x==0.) {
+    return 0;
+  }
+  else{
+    result = 1. / sqrt(x) * (erf(sqrt(x))- erf(0));
+    return result;
+  }
 }
 
 double calculate_AB_2(double Ax, double Ay, double Az, double Bx, double By, double Bz){
