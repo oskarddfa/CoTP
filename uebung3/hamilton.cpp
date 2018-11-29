@@ -1,6 +1,6 @@
 
 #include <cmath>
-
+#include <stdio.h>
 //Funktion die im Paper von Boys benutzt wird
 double F(double x){
   double result;
@@ -37,7 +37,11 @@ double nucleus(double a, double b, double AB_2, double KP_2){
   result = vorfaktor * F(KP_2 * (a + b));
   return result;
 }
-
+double nucleus_nucleus(double Kx1, double Ky1, double Kz1, double Kx2, double Ky2, double Kz2){
+  double result;
+  result = 1/ sqrt(calculate_AB_2(Kx1, Ky1, Kz1, Kx2, Ky2, Kz2));
+  return result;
+}
 /*
 // Elektron - Elektron Wechselwirkung
 double ee_interaction(double a, double b, double c, double d, double AB_2, double CD_2){
@@ -64,7 +68,7 @@ double hamiltonian(double a[], double b[], double Ax[], double Ay[], double Az[]
   double result=0.0;
 
   for (int i = 0; i < N_particles; i++) {
-    double sum_of_nuclei = 0.0;
+    double sum_of_nuclei = 0.0, nucnucinter=0.0;
     // AB_2 ist sum_x,y,z  (A_i - B_i)^2
     double AB_2 = calculate_AB_2(Ax[i], Ay[i], Az[i], Bx[i], By[i], Bz[i]);
     // Px = (a * Ax + b * Bx) / (a + b) ist der Eintrag zum Ausrechnen von KP_2
@@ -76,6 +80,7 @@ double hamiltonian(double a[], double b[], double Ax[], double Ay[], double Az[]
       double KP_2 = calculate_AB_2(Kx[j], Ky[j], Kz[j], Px, Py, Pz);
       sum_of_nuclei += nucleus(a[i], b[i], AB_2, KP_2);
     }
+    nucnucinter = nucleus_nucleus(Kx[0], Ky[0], Kz[0], Kx[1], Ky[1], Kz[1]);
     /*
     double sum_of_ee_interactions = 0.0;
     FUER MEHRERE TEILCHEN
@@ -85,7 +90,9 @@ double hamiltonian(double a[], double b[], double Ax[], double Ay[], double Az[]
     }
     */
 
-    result += free(a[i], b[i], AB_2) + sum_of_nuclei;
+    result += free(a[i], b[i], AB_2) + sum_of_nuclei;// + nucnucinter;
+    // printf("result%f\n", result);
+    // printf("miasciasn%f\n", result-nucnucinter);
   }
   return result;
 }

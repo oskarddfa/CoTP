@@ -70,14 +70,14 @@ int diagonalize(Mat D, Mat S, double a[], double Ax[], double Ay[], double Az[],
   /*
      Optional: Get some information from the solver and display it
   */
-  ierr = EPSGetIterationNumber(eps,&its);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD," Number of iterations of the method: %D\n",its);CHKERRQ(ierr);
-  ierr = EPSGetType(eps,&type);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD," Solution method: %s\n\n",type);CHKERRQ(ierr);
-  ierr = EPSGetDimensions(eps,&nev,NULL,NULL);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD," Number of requested eigenvalues: %D\n",nev);CHKERRQ(ierr);
-  ierr = EPSGetTolerances(eps,&tol,&maxit);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD," Stopping condition: tol=%.4g, maxit=%D\n",(double)tol,maxit);CHKERRQ(ierr);
+  // ierr = EPSGetIterationNumber(eps,&its);CHKERRQ(ierr);
+  // ierr = PetscPrintf(PETSC_COMM_WORLD," Number of iterations of the method: %D\n",its);CHKERRQ(ierr);
+  // ierr = EPSGetType(eps,&type);CHKERRQ(ierr);
+  // ierr = PetscPrintf(PETSC_COMM_WORLD," Solution method: %s\n\n",type);CHKERRQ(ierr);
+  // ierr = EPSGetDimensions(eps,&nev,NULL,NULL);CHKERRQ(ierr);
+  // ierr = PetscPrintf(PETSC_COMM_WORLD," Number of requested eigenvalues: %D\n",nev);CHKERRQ(ierr);
+  // ierr = EPSGetTolerances(eps,&tol,&maxit);CHKERRQ(ierr);
+  // ierr = PetscPrintf(PETSC_COMM_WORLD," Stopping condition: tol=%.4g, maxit=%D\n",(double)tol,maxit);CHKERRQ(ierr);
 
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                     Display solution and clean up
@@ -86,15 +86,15 @@ int diagonalize(Mat D, Mat S, double a[], double Ax[], double Ay[], double Az[],
      Get number of converged approximate eigenpairs
   */
   ierr = EPSGetConverged(eps,&nconv);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD," Number of converged eigenpairs: %D\n\n",nconv);CHKERRQ(ierr);
+  // ierr = PetscPrintf(PETSC_COMM_WORLD," Number of converged eigenpairs: %D\n\n",nconv);CHKERRQ(ierr);
 
   if (nconv>0) {
     /*
        Display eigenvalues and relative errors
     */
-    ierr = PetscPrintf(PETSC_COMM_WORLD,
-         "           k          ||Ax-kx||/||kx||\n"
-         "   ----------------- ------------------\n");CHKERRQ(ierr);
+    // ierr = PetscPrintf(PETSC_COMM_WORLD,
+         // "           k          ||Ax-kx||/||kx||\n"
+         // "   ----------------- ------------------\n");CHKERRQ(ierr);
 
     for (i=0;i<nconv;i++) {
       /*
@@ -131,7 +131,7 @@ int diagonalize(Mat D, Mat S, double a[], double Ax[], double Ay[], double Az[],
       for (int j = 0; j < n; j++) {
         MatSetValue(S, j, i, v[j], INSERT_VALUES);
       }
-      PetscPrintf(PETSC_COMM_WORLD," %9f%+9fi %12g\n",(double)re,(double)im,(double)error);
+      // PetscPrintf(PETSC_COMM_WORLD," %9f%+9fi %12g\n",(double)re,(double)im,(double)error);
     }
   }
    /*

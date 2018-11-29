@@ -43,22 +43,26 @@ int main(int argc,char **argv)
   Vec            xr,xi;
   PetscInt       n=8,i,Istart,Iend,nev=8,maxit,its,nconv;
   PetscErrorCode ierr;
+  int iterations =200;
+  float lowestenergy[iterations];
+  SlepcInitialize(&argc,&argv,(char*)0,help);
+  for (int dist = 1; dist < iterations; dist++) {
   int N_nuclei = 2;
   int N_particles = 1;
   int size = n;
+  float distance = dist/100.;
   double a[4] = {1.0, 2.0, 3.0, 4.0};
-  double Ax[N_nuclei] = {0.0, 0.01};
+  double Ax[N_nuclei] = {0.0, distance};
   double Ay[N_nuclei] = {0.0, 0.0};
   double Az[N_nuclei] = {0.0, 0.0};
-  double Kx[N_nuclei] = {0.0, 0.01};
+  double Kx[N_nuclei] = {0.0, distance};
   double Ky[N_nuclei] = {0.0, 0.0};
   double Kz[N_nuclei] = {0.0, 0.0};
 
 
-  SlepcInitialize(&argc,&argv,(char*)0,help);
 
   ierr = PetscOptionsGetInt(NULL,NULL,"-n",&n,NULL);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD,"\n1-D Laplacian Eigenproblem, n=%D\n\n",n);CHKERRQ(ierr);
+  // ierr = PetscPrintf(PETSC_COMM_WORLD,"\n1-D Laplacian Eigenproblem, n=%D\n\n",n);CHKERRQ(ierr);
 
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
      Compute the operator matrix that defines the eigensystem, Ax=kx
@@ -91,10 +95,11 @@ int main(int argc,char **argv)
   for (i=Istart;i<Iend;i++) {
     for (int j = Istart; j < Iend; j++) {
       double hamiltonvalue = hamiltonian(&a[i % 4], &a[j % 4], &Ax[i/4], &Ay[i/4],
-        &Az[i/4], &Ax[j/4], &Ay[j/4], &Az[j/4], Kx, Ky, Kz, N_nuclei, N_particles);
+        &Az[i/4], &Ax[j/4], &Ay[j/4], &Az[j/4], Kx, Ky, Kz, N_nuclei, N_particles);//+1./ sqrt(calculate_AB_2(Kx[0], Ky[0], Kz[0], Kx[1], Ky[1], Kz[1]));
       ierr = MatSetValue(A,i,j,hamiltonvalue,INSERT_VALUES);CHKERRQ(ierr);
     }
   }
+  // printf("%f\n", 1./ sqrt(calculate_AB_2(Kx[0], Ky[0], Kz[0], Kx[1], Ky[1], Kz[1])));
   ierr = MatAssemblyBegin(D,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   ierr = MatAssemblyEnd(D,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   ierr = MatAssemblyBegin(A,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
@@ -107,16 +112,12 @@ int main(int argc,char **argv)
   ierr = MatAssemblyEnd(H,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   MatTranspose(S, MAT_INITIAL_MATRIX, &S_1);
 
+  // MatView(A,PETSC_VIEWER_STDOUT_WORLD);
 
   MatMatMatMult(S,A,S_1, MAT_INITIAL_MATRIX, PETSC_DEFAULT, &H);
   // MatCopy(H, A, DIFFERENT_NONZERO_PATTERN);
-  PetscBool aer;
-  MatEqual(A,H, &aer);
-  if (not aer){
-    printf("THEY ARE NOT EQUAL\n" );
-  }
   ierr = MatDestroy(&D);CHKERRQ(ierr);
-  // ierr = MatDestroy(&S);CHKERRQ(ierr);
+  ierr = MatDestroy(&S);CHKERRQ(ierr);
   ierr = MatDestroy(&S_1);CHKERRQ(ierr);
   // ierr = MatDestroy(&H);CHKERRQ(ierr);
   ierr = MatCreateVecs(H,NULL,&xr);CHKERRQ(ierr);
@@ -133,7 +134,7 @@ int main(int argc,char **argv)
   /*
      Set operators. In this case, it is a standard eigenvalue problem
   */
-  ierr = EPSSetOperators(eps,H,NULL);CHKERRQ(ierr);
+  ierr = EPSSetOperators(eps,A,NULL);CHKERRQ(ierr);
   ierr = EPSSetProblemType(eps,EPS_HEP);CHKERRQ(ierr);
 
   /*
@@ -165,16 +166,16 @@ int main(int argc,char **argv)
      Get number of converged approximate eigenpairs
   */
   ierr = EPSGetConverged(eps,&nconv);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD," Number of converged eigenpairs: %D\n\n",nconv);CHKERRQ(ierr);
+  // ierr = PetscPrintf(PETSC_COMM_WORLD," Number of converged eigenpairs: %D\n\n",nconv);CHKERRQ(ierr);
 
   if (nconv>0) {
     /*
        Display eigenvalues and relative errors
     */
-    ierr = PetscPrintf(PETSC_COMM_WORLD,
-         "           k          ||Ax-kx||/||kx||\n"
-         "   ----------------- ------------------\n");CHKERRQ(ierr);
-
+    // ierr = PetscPrintf(PETSC_COMM_WORLD,
+    //      "           k          ||Ax-kx||/||kx||\n"
+    //      "   ----------------- ------------------\n");CHKERRQ(ierr);
+    float minenergy=10.;
     for (i=0;i<nconv;i++) {
       /*
         Get converged eigenpairs: i-th eigenvalue is stored in kr (real part) and
@@ -199,14 +200,21 @@ int main(int argc,char **argv)
       re = kr;
       im = ki;
 #endif
-      if (im!=0.0) {
-        ierr = PetscPrintf(PETSC_COMM_WORLD," %9f%+9fi %12g\n",(double)re,(double)im,(double)error);CHKERRQ(ierr);
-      } else {
-        ierr = PetscPrintf(PETSC_COMM_WORLD,"   %12f       %12g\n",(double)re,(double)error);CHKERRQ(ierr);
+      if (minenergy>re){
+        minenergy = re;
       }
+      // if (im!=0.0) {
+      //   ierr = PetscPrintf(PETSC_COMM_WORLD," %9f%+9fi %12g\n",(double)re,(double)im,(double)error);CHKERRQ(ierr);
+      // } else {
+      //   ierr = PetscPrintf(PETSC_COMM_WORLD,"   %12f       %12g\n",(double)re,(double)error);CHKERRQ(ierr);
+      // }
 
     }
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"\n");CHKERRQ(ierr);
+    // printf("minenergy = %f\n", minenergy );
+    // printf("Distance = %f\n", distance );
+    // ierr = PetscPrintf(PETSC_COMM_WORLD,"\n");CHKERRQ(ierr);
+    printf("%f\t %f \n",distance,minenergy);
+    lowestenergy[i]=minenergy;
   }
 
   /*
@@ -217,6 +225,7 @@ int main(int argc,char **argv)
   ierr = MatDestroy(&S);CHKERRQ(ierr);
   ierr = VecDestroy(&xr);CHKERRQ(ierr);
   ierr = VecDestroy(&xi);CHKERRQ(ierr);
-  ierr = SlepcFinalize();
-  return ierr;
+}
+ierr = SlepcFinalize();
+return 0;
 }
