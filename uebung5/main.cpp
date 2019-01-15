@@ -56,6 +56,7 @@ Input parameters include:\n\
 */
 #include <petscts.h>
 #include <petscdraw.h>
+#include <complex>
 
 /*
    User-defined application context - contains data needed by the
@@ -94,6 +95,7 @@ int main(int argc,char **argv)
   PetscMPIInt    size;
   PetscBool      flg;
   PetscReal      dt,ftime;
+  double  E=1.,d21=1.;
 
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
      Initialize program and set problem parameters
@@ -106,7 +108,7 @@ int main(int argc,char **argv)
   m               = 60;
   ierr            = PetscOptionsGetInt(NULL,NULL,"-m",&m,NULL);CHKERRQ(ierr);
   ierr            = PetscOptionsHasName(NULL,NULL,"-debug",&appctx.debug);CHKERRQ(ierr);
-  appctx.m        = m;
+  appctx.m        = 4;
   appctx.h        = 1.0/(m-1.0);
   appctx.norm_2   = 0.0;
   appctx.norm_max = 0.0;
@@ -164,6 +166,20 @@ int main(int argc,char **argv)
        u_t = f(u,t), the user provides the discretized right-hand-side
        as a time-dependent matrix.
     */
+    MatSetValue(A,0,0,-I*DeltaE,INSERT_VALUES);CHKERRQ(ierr);
+    MatSetValue(A,1,1,I*DeltaE,INSERT_VALUES);CHKERRQ(ierr);
+    MatSetValue(A,2,0,-I*E*d21,INSERT_VALUES);CHKERRQ(ierr);
+    MatSetValue(A,3,0,I*E*d21,INSERT_VALUES);CHKERRQ(ierr);
+    MatSetValue(A,2,1,I*E*d21,INSERT_VALUES);CHKERRQ(ierr);
+    MatSetValue(A,3,1,-I*E*d21,INSERT_VALUES);CHKERRQ(ierr);
+    MatSetValue(A,0,2,-E*d21,INSERT_VALUES);CHKERRQ(ierr);
+    MatSetValue(A,0,3,E*d21,INSERT_VALUES);CHKERRQ(ierr);
+    MatSetValue(A,1,2,E*d21,INSERT_VALUES);CHKERRQ(ierr);
+    MatSetValue(A,1,3,-E*d21,INSERT_VALUES);CHKERRQ(ierr);
+
+
+
+    TSComputeRHSJacobianConstant
     ierr = TSSetRHSFunction(ts,NULL,TSComputeRHSFunctionLinear,&appctx);CHKERRQ(ierr);
     ierr = TSSetRHSJacobian(ts,A,A,RHSMatrixHeat,&appctx);CHKERRQ(ierr);
   } else {
@@ -487,3 +503,8 @@ PetscErrorCode RHSMatrixHeat(TS ts,PetscReal t,Vec X,Mat AA,Mat BB,void *ctx)
 
   return 0;
 }
+
+PetscErrorCode TSComputeRHSBloch(TS ts,PetscReal t,Vec U,Vec F,void *ctx)
+  {
+
+  }
